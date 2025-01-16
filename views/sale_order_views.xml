@@ -8,6 +8,9 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='payment_term_id']" position="after">
                 <field name="installments"/>
+                    <field name="financing_duration"/>
+                    <field name="financing_start_date"/>
+                    <field name="financing_end_date" readonly="1"/>
             </xpath>
         </field>
     </record>
