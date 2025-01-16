@@ -15,6 +15,7 @@ class WooCommerceAPIController(http.Controller):
             customer_data = order_data.get('customer', {})
             products_data = order_data.get('products', [])
             shipping_data = order_data.get('shipping', {}).get('address', {})
+            installments = order_data.get('installments', 0)
 
             if not customer_data or not products_data:
                 return {"status": "error", "message": "Missing required fields: customer or products"}
@@ -45,6 +46,7 @@ class WooCommerceAPIController(http.Controller):
                 'partner_id': partner.id,
                 'order_line': order_lines,
                 'note': order_data.get('metadata', {}).get('order_note', ''),
+                'installments': installments,
             })
 
             # Agregar dirección de envío si aplica
