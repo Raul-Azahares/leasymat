@@ -1,10 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_order_form_inherit" model="ir.ui.view">
-        <field name="name">sale.order.form.installments</field>
+    <!-- Personalización de la vista de formulario -->
+    <record id="view_order_form_installments" model="ir.ui.view">
+        <field name="name">sale.order.installments</field>
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//sheet//group" position="inside">
+            <xpath expr="//field[@name='payment_term_id']" position="after">
+                <field name="installments"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Personalización de la vista de lista -->
+    <record id="view_order_tree_installments" model="ir.ui.view">
+        <field name="name">sale.order.tree.installments</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
                 <field name="installments"/>
             </xpath>
         </field>
