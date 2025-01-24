@@ -11,6 +11,13 @@
                     <field name="financing_duration"/>
                     <field name="financing_start_date"/>
                     <field name="financing_end_date" readonly="1"/>
+                    <field name="financing_agency_id" />
+                <field name="include_standard_warranty"/>
+                <field name="warranty_start_date"/>
+                <field name="warranty_end_date"/>
+                <field name="include_full_service_warranty"/>
+                <field name="full_service_warranty_percentage"/>
+                <field name="full_service_warranty_cost" readonly="1"/>
             </xpath>
         </field>
     </record>

@@ -7,7 +7,10 @@
     'description': 'Módulo para integrar WooCommerce con Odoo a través de una API personalizada.',
     'depends': ['base','sale'],
     'data': [
+        'security/ir.model.access.csv',
         'views/sale_order_views.xml',
+        'views/financing_agency_menu.xml',
+        'views/account_move_views.xml',
     ],
     'installable': True,
     'application': False,
