@@ -12,6 +12,10 @@
         'views/financing_agency_menu.xml',
         'views/account_move_views.xml',
     ],
+    'controllers': [
+        'controllers/main.py',
+        'controllers/product_api.py',
+    ],
     'installable': True,
     'application': False,
     'auto_install': False,
