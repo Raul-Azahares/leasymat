@@ -12,25 +12,27 @@ class ProductAPIController(http.Controller):
             data = json.loads(request.httprequest.data)
 
             # Validar datos esenciales
+            name = data.get('name')  # Solo el nombre es obligatorio
+            if not name:
+                return {"status": "error", "message": "Missing required field: name"}
+
+            # Obtener otros campos (opcionales)
             sku = data.get('sku')
-            name = data.get('name')
             sales_price = data.get('sales_price')
             description = data.get('description')
 
-            if not sku or not name or not sales_price:
-                return {"status": "error", "message": "Missing required fields: sku, name, or sales_price"}
-
-            # Verificar si el producto ya existe
-            product = request.env['product.product'].sudo().search([('default_code', '=', sku)], limit=1)
-            if product:
-                return {"status": "error", "message": f"Product with SKU {sku} already exists"}
+            # Verificar si el producto ya existe (solo si se proporciona SKU)
+            if sku:
+                product = request.env['product.product'].sudo().search([('default_code', '=', sku)], limit=1)
+                if product:
+                    return {"status": "error", "message": f"Product with SKU {sku} already exists"}
 
             # Crear el producto
             new_product = request.env['product.product'].sudo().create({
-                'default_code': sku,
-                'name': name,
-                'list_price': float(sales_price),
-                'description': description,
+                'default_code': sku,  # SKU es opcional
+                'name': name,         # Nombre es obligatorio
+                'list_price': float(sales_price) if sales_price else 0.0,  # Precio es opcional
+                'description': description,  # Descripción es opcional
             })
 
             return {"status": "success", "message": "Product created successfully", "product_id": new_product.id}
