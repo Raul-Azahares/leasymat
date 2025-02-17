@@ -9,8 +9,22 @@ class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
     #payment_method = fields.Char(string="WooCommerce Payment Method")
-    installments = fields.Integer(string="Installments",required=False,readonly=False, help="Number of installments the customer will pay for this order",
-                                  default=1)
+    #installments = fields.Integer(string="Quota",required=False,readonly=False, help="Number of quota the customer will pay for this order",
+    #                              default=1)
+    installments = fields.Selection(
+        selection=[
+            ('12', '12'),
+            ('24', '24'),
+            ('48', '48'),
+            ('60', '60'),
+
+        ],
+        string="Quotas",
+        required=False,
+        readonly=False,
+        help="Number of quotas in which the customer will pay for this order.",
+        default='12'
+    )
     financing_duration = fields.Integer(
         string='Financing Duration (Months)',
         help='Duration of the financing contract in months.'
@@ -64,11 +78,32 @@ class SaleOrder(models.Model):
         compute="_compute_full_service_warranty_cost", 
         store=True
     )
+    amount_total_with_warranty = fields.Monetary(
+        string="Total with Warranty",
+        compute="_compute_amount_total_with_warranty",
+        store=True,
+        help="Total amount including the Full Service Warranty cost."
+    )
+    @api.onchange('include_standard_warranty')
+    def _onchange_include_standard_warranty(self):
+        if self.include_standard_warranty:
+            self.include_full_service_warranty = False
+
+    @api.onchange('include_full_service_warranty')
+    def _onchange_include_full_service_warranty(self):
+        if self.include_full_service_warranty:
+            self.include_standard_warranty = False
+    
+    @api.depends('amount_total', 'full_service_warranty_cost')
+    def _compute_amount_total_with_warranty(self):
+        for order in self:
+            order.amount_total_with_warranty = order.amount_total + order.full_service_warranty_cost
     @api.depends('include_full_service_warranty', 'amount_total', 'full_service_warranty_percentage')
     def _compute_full_service_warranty_cost(self):
         for order in self:
             if order.include_full_service_warranty and order.full_service_warranty_percentage:
-                order.full_service_warranty_cost = (order.amount_total * order.full_service_warranty_percentage) / 100
+                # Calcular sobre el monto total con impuestos
+                order.full_service_warranty_cost = (order.amount_untaxed * order.full_service_warranty_percentage) / 100
             else:
                 order.full_service_warranty_cost = 0.0
     @api.depends('date_order')
@@ -116,13 +151,33 @@ class SaleOrder(models.Model):
     
     def _create_invoices(self, grouped=False, final=False):
         invoices = super(SaleOrder, self)._create_invoices(grouped=grouped, final=final) # pylint: disable=no-member
+        
         for order in self:
             for invoice in invoices:
+                if order.full_service_warranty_cost:
+                    # Buscar el producto de garantía de servicio completo
+                    warranty_product = self.env['product.product'].search(
+                        [('name', '=', 'Full Service Warranty')], limit=1)
+                    
+                    if warranty_product:
+                        # Crear la línea de factura para la garantía de servicio completo
+                        self.env['account.move.line'].create({
+                            'move_id': invoice.id,
+                            'product_id': warranty_product.id,
+                            'name': warranty_product.name,
+                            'quantity': 1,
+                            'price_unit': order.full_service_warranty_cost,
+                            'tax_ids': [(5, 0, 0)],  # Sin impuestos
+                            'account_id': warranty_product.property_account_income_id.id or warranty_product.categ_id.property_account_income_categ_id.id,
+                        })
+                
                 if order.financing_agency_id:
-                    invoice.partner_id = order.financing_agency_id.partner_id
+                    # Cambiar el cliente de la factura al organismo de financiación
+                    invoice.partner_id = order.financing_agency_id.partner_id.id
                     if order.partner_id:
                         invoice.narration = f"{order.partner_id.name}"
                         _logger.info(f"Narration asignada en _create_invoices: {invoice.narration}")
                     else:
                         _logger.warning("No partner_id found for this sale order.")
+        
         return invoices

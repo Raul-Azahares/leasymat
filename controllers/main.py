@@ -15,7 +15,7 @@ class WooCommerceAPIController(http.Controller):
             customer_data = order_data.get('customer', {})
             products_data = order_data.get('products', [])
             shipping_data = order_data.get('shipping', {}).get('address', {})
-            installments = order_data.get('installments', 0)
+            installments = order_data.get('quote', 0)
 
             if not customer_data or not products_data:
                 return {"status": "error", "message": "Missing required fields: customer or products"}
